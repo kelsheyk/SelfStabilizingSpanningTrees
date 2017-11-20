@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package selfstabilizingspanningtree;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -43,8 +42,7 @@ public class TCPSocket implements Runnable {
         }
     }  
 
-    void _receive(Socket s, String msg) {
-        this.currentSocket = s;        
+    void _receive(Socket s, String msg) {       
         String[] tokens = msg.split(" ");
         // If new id:host:port before, add it to neighbors
         String sendersID = tokens[1];
@@ -54,6 +52,8 @@ public class TCPSocket implements Runnable {
         }
         if (tokens[0].equals("requestData")) {
             //    sender's ID
+            // TODO: send my data when requesting
+            ns.receiveData(Integer.parseInt(sendersID), tokens[2]);
             ns.sendData(Integer.parseInt(sendersID));
         } else if (tokens[0].equals("sendData")) {
             //          sender's ID,              dataJsonString            

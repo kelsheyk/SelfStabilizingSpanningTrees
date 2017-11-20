@@ -1,4 +1,3 @@
-package selfstabilizingspanningtree;
 import java.util.*;
 
 public class ServerTable{
@@ -10,6 +9,7 @@ public class ServerTable{
             public final int portNum;
 
             public ServerInfo(String idHostPort){
+                System.out.println(idHostPort);
                 String[] idHostPortArray = idHostPort.split(":");
                 this.ID = idHostPortArray[0];
                 this.hostAddress = idHostPortArray[1];

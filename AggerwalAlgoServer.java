@@ -3,12 +3,13 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package selfstabilizingspanningtree;
 import java.util.*;
 import org.json.simple.*;
 import org.json.simple.parser.*;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 
 public class AggerwalAlgoServer {
@@ -31,19 +32,29 @@ public class AggerwalAlgoServer {
     // "local" vars
     JSONObject neighbor_data;
     
-    public AggerwalAlgoServer (int id, int numServ){
+    public AggerwalAlgoServer (int id, int numServ, String neighborFile){
         //super(id,numServ);
         this.ID = id;
         Scanner scanner = new Scanner(System.in);
         String userInput;
 
         String[] servers = new String[numServ];
-        for (int i = 0; i < numServ; i++) {
-            System.out.println("Enter the id:host:port for each server");
-            userInput = scanner.nextLine();
-            // XXX: assumes perfect input. Should add err checking
-            servers[i] = userInput;    
-        }
+        int i = 0;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(neighborFile));
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                servers[i] = line;
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+                i++;
+            }
+        } catch (Exception e) {
+            System.out.println(e);
+        } 
         this.neighbors = new ServerTable(numServ, servers);
         System.out.println(this.ID);
         String s_id = Integer.toString(this.ID);
@@ -163,13 +174,7 @@ public class AggerwalAlgoServer {
         }
     }
     
-    // Sends request for data to v
-    void requestData(int ID_v) {
-        this.tcpSocket._send(ID_v,"requestData " + this.ID);
-    }
-    
-    //sends shared vars in stringified JSON form to v
-    void sendData(int ID_v) {
+    public String packageSharedData(int ID_v) {
         Map<String, Object> myData = new HashMap<String, Object>();
         myData.put("priority",this.priority);
         myData.put("distance",this.distance);
@@ -181,7 +186,19 @@ public class AggerwalAlgoServer {
         JSONObject json = new JSONObject();
         json.putAll(myData);
         String stringData = json.toJSONString();
-        this.tcpSocket._send(ID_v, "sendData " + this.ID + " " + stringData);
+        return stringData;
+    }
+    
+    // Sends request for data to v
+    void requestData(int ID_v) {
+        String myData = this.packageSharedData(ID_v);
+        this.tcpSocket._send(ID_v,"requestData " + this.ID + myData);
+    }
+    
+    //sends shared vars in stringified JSON form to v
+    void sendData(int ID_v) {
+        String myData = this.packageSharedData(ID_v);
+        this.tcpSocket._send(ID_v, "sendData " + this.ID + " " + myData);
     }
     
     //receives data from v. copies to local vars. Coloring stuff
@@ -256,18 +273,19 @@ public class AggerwalAlgoServer {
     public static void main (String[] args) {
         int serverID;
         int numServ;
-        if (args.length != 2) {
+        if (args.length != 3) {
             System.out.println("ERROR: Provide 2 arguments");
             System.out.println("\t(1) <serverID>: the unique ID of this server");
             System.out.println("\t(2) <numServ>: the number of neighboring servers");
-
+            System.out.println("\t(2) <numServ>: text file of neighbor info");
             System.exit(-1);
         }
         serverID = Integer.parseInt(args[0]);
-        numServ = Integer.parseInt(args[1]);  
+        numServ = Integer.parseInt(args[1]);
+        String neighborFileName = args[2];
             
         // Kick off Listener
-        AggerwalAlgoServer ns = new AggerwalAlgoServer(serverID, numServ);
+        AggerwalAlgoServer ns = new AggerwalAlgoServer(serverID, numServ, neighborFileName);
         TCPSocket s1 = new TCPSocket(ns.myPort, ns);
         Thread t1=new Thread(s1);
         t1.start();   
