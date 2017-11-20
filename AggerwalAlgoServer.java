@@ -7,17 +7,10 @@ package selfstabilizingspanningtree;
 import java.util.*;
 import org.json.simple.*;
 import org.json.simple.parser.*;
-import java.net.*;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 
-
-/**
- *
- * @author kking
- */
 public class AggerwalAlgoServer {
     // Needed for communication
     String myHost;
@@ -25,7 +18,7 @@ public class AggerwalAlgoServer {
     ServerTable neighbors;
     
     int ID;
-    tcpSocket tcpSocket;
+    TCPSocket tcpSocket;
     
     // "shared" vars
     priorityScheme priority; 
@@ -64,56 +57,7 @@ public class AggerwalAlgoServer {
         this.distance = -1;
         this.priority = new priorityScheme();
     }
-    
-    
-    class priorityScheme {
-        ArrayList<Integer> priority = new ArrayList<Integer>();
-        
-        public priorityScheme(ArrayList<Integer> newPriority) {
-            this.priority = newPriority;
-        }
-        
-        public priorityScheme() {
-            this.priority = new ArrayList<Integer>();
-        }
-        
-        boolean greaterThan(ArrayList<Integer> priority_v) {
-            int minLen = Math.min(priority.size(),priority_v.size());
-            boolean eq = true;
-            for (int i=0; i<minLen; i++) {
-                if (priority.get(i) < priority_v.get(i)) {
-                    // priority is strongly less than priority_v
-                    return false;
-                }
-                if (priority.get(i) != priority_v.get(i)) {
-                    eq = false;
-                }
-            }
-            if (eq && priority.size() <= priority_v.size()) {
-                // priority is weakly less than priority_v
-                return false;
-            }
-            return true;
-        }
-        
-        boolean lessThanEq(ArrayList<Integer> priority_v) {
-            return !(greaterThan(priority_v));
-        }
-        
-        boolean equals(ArrayList<Integer> priority_v) {
-            if (priority.size() != priority_v.size()) {
-                return false;
-            }
-            for (int i=0; i<priority.size(); i++) {
-                if (priority.get(i) != priority_v.get(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
        
-    
     // copies neighbor data into local vars, performs coloring tasks
     void copy_neighbor_data() {
         Iterator it = this.neighbors.servers.entrySet().iterator();
@@ -149,8 +93,6 @@ public class AggerwalAlgoServer {
             
             // force root to extend 1st, if about to be overrun by a suffix ID?
             // NOT needed for correctness, see statement F
-            //if ((this.parent == -1) && (this.priority <)) {
-            // appendEntry()
             
             // if u can improve its priority, by becoming child of another 
             // neighbor, do so, otherwise become root 
@@ -311,62 +253,10 @@ public class AggerwalAlgoServer {
         this.priority.priority.add(this.ID);
     }
     
-    public static class tcpSocket implements Runnable {
-        int portNum;
-        AggerwalAlgoServer ns;
-        ServerSocket listener;
-        Socket currentSocket;
-      
-        public tcpSocket(int portNum, AggerwalAlgoServer ns) {
-            this.portNum = portNum;
-            this.ns = ns;
-            ns.tcpSocket = this;
-        }
-        
-        void _send(int ID_v, String msg) {
-            try {
-                Socket s = this.currentSocket;
-                PrintWriter pout = new PrintWriter(s.getOutputStream());
-                pout.println(msg);
-                pout.flush();
-                s.close();
-            } catch (IOException e) {
-                System.err.println("Send error: " + e);
-            }
-        }  
-    
-        void _receive(Socket s, String msg) {
-            this.currentSocket = s;
-            String[] tokens = msg.split(" ");
-            if (tokens[0].equals("requestData")) {
-                //    sender's ID
-                ns.sendData(Integer.parseInt(tokens[1]));
-            } else if (tokens[0].equals("sendData")) {
-                //          sender's ID,              dataJsonString            
-                ns.receiveData(Integer.parseInt(tokens[1]), tokens[2]);
-            }
-        }
-
-        public void run() {
-            try {
-                this.listener = new ServerSocket(this.portNum);
-                Socket s;
-                while((s = this.listener.accept()) != null) {
-                    Scanner sc = new Scanner(s.getInputStream());
-                    String command;
-                    command = sc.nextLine();
-                    _receive(s,command);
-                }
-            } catch (Exception e) {
-              System.err.println("Server aborted:" + e);
-            }
-        }
-    }
-    
     public static void main (String[] args) {
         int serverID;
         int numServ;
-        /*if (args.length != 2) {
+        if (args.length != 2) {
             System.out.println("ERROR: Provide 2 arguments");
             System.out.println("\t(1) <serverID>: the unique ID of this server");
             System.out.println("\t(2) <numServ>: the number of neighboring servers");
@@ -375,19 +265,10 @@ public class AggerwalAlgoServer {
         }
         serverID = Integer.parseInt(args[0]);
         numServ = Integer.parseInt(args[1]);  
-        */
-        Scanner scanner = new Scanner(System.in);
-
-        System.out.println("Enter ID of Server:");
-        serverID = Integer.parseInt(scanner.nextLine());
-        System.out.println("Enter # of Servers:");
-        numServ = Integer.parseInt(scanner.nextLine());
             
-
-        //Listener
+        // Kick off Listener
         AggerwalAlgoServer ns = new AggerwalAlgoServer(serverID, numServ);
-        System.out.println("Server started:");
-        tcpSocket s1 = new tcpSocket(ns.myPort, ns);
+        TCPSocket s1 = new TCPSocket(ns.myPort, ns);
         Thread t1=new Thread(s1);
         t1.start();   
     }
