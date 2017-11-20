@@ -20,7 +20,7 @@ public class TCPSocket implements Runnable {
     int portNum;
     AggerwalAlgoServer ns;
     ServerSocket listener;
-    Socket currentSocket;
+    //Socket currentSocket;
 
     public TCPSocket(int portNum, AggerwalAlgoServer ns) {
         this.portNum = portNum;
@@ -30,7 +30,9 @@ public class TCPSocket implements Runnable {
 
     void _send(int ID_v, String msg) {
         try {
-            Socket s = this.currentSocket;
+            
+            ServerTable.ServerInfo server_v = ns.neighbors.servers.get(Integer.toString(ID_v));
+            Socket s = new Socket(server_v.hostAddress, server_v.portNum);
             PrintWriter pout = new PrintWriter(s.getOutputStream());
             pout.println(msg);
             pout.flush();
