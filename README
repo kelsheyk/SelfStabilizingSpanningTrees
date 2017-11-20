@@ -1,0 +1,2 @@
+compile: javac *.java -cp "./json-simple-1.1.1.jar"
+run: bash runscript.sh
