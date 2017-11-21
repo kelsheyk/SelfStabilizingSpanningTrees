@@ -19,8 +19,18 @@ public class priorityScheme {
 
     public priorityScheme() {
         this.priority = new ArrayList<Integer>();
+        // TODO: pass in predefined priority
+        this.priority.add(0);
     }
 
+    public String toString() { 
+        String[] list = new String[this.priority.size()];
+        for (int i=0; i<this.priority.size(); i++) {
+            list[i] = this.priority.get(i).toString();
+        }
+        String listString = String.join(", ", list);
+        return listString;
+    }
     boolean greaterThan(ArrayList<Integer> priority_v) {
         int minLen = Math.min(priority.size(),priority_v.size());
         boolean eq = true;

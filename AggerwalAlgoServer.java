@@ -25,7 +25,7 @@ public class AggerwalAlgoServer {
     priorityScheme priority; 
     int distance;
     int parent;
-    int color; //TODO: init to -1
+    int color; 
     boolean other_trees;
     JSONObject neighbor_colors;
     
@@ -56,7 +56,6 @@ public class AggerwalAlgoServer {
             System.out.println(e);
         } 
         this.neighbors = new ServerTable(numServ, servers);
-        System.out.println(this.ID);
         String s_id = Integer.toString(this.ID);
         ServerTable.ServerInfo myInfo = this.neighbors.servers.get(s_id);
         this.myHost = myInfo.hostAddress;
@@ -73,8 +72,8 @@ public class AggerwalAlgoServer {
     void copy_neighbor_data() {
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            int ID_v = (int) pair.getKey();
+            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+            int ID_v = Integer.parseInt(pair.getKey());
             requestData(ID_v);
         }
     }
@@ -88,8 +87,8 @@ public class AggerwalAlgoServer {
         // we have to compare on priority AND distance.
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            int ID_v = (int) pair.getKey();
+            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+            int ID_v = Integer.parseInt(pair.getKey());
             HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
             priorityScheme priority_v = new priorityScheme((ArrayList<Integer>) data_v.get("priority"));
             int distance_v = (int) data_v.get("distance");
@@ -128,8 +127,8 @@ public class AggerwalAlgoServer {
         boolean other_tree_detected = false;
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (same_tree && it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            int ID_v = (int) pair.getKey();
+            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+            int ID_v = Integer.parseInt(pair.getKey());
             HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
             ArrayList<Integer> priority_v = (ArrayList<Integer>) data_v.get("priority");
             int distance_v = (int) data_v.get("distance");
@@ -176,13 +175,13 @@ public class AggerwalAlgoServer {
     
     public String packageSharedData(int ID_v) {
         Map<String, Object> myData = new HashMap<String, Object>();
-        myData.put("priority",this.priority);
+        myData.put("priority",this.priority.toString());
         myData.put("distance",this.distance);
         myData.put("parent", this.parent);
         myData.put("color", this.color);
         myData.put("other_trees", this.other_trees);
         // TODO: don't think I need this
-        myData.put("self_color", (int) this.neighbor_colors.get(ID_v));
+        //myData.put("self_color", (int) this.neighbor_colors.get(ID_v));
         JSONObject json = new JSONObject();
         json.putAll(myData);
         String stringData = json.toJSONString();
@@ -192,6 +191,9 @@ public class AggerwalAlgoServer {
     // Sends request for data to v
     void requestData(int ID_v) {
         String myData = this.packageSharedData(ID_v);
+        System.out.println(ID_v);
+        System.out.println(this.ID);
+        System.out.println(myData);
         this.tcpSocket._send(ID_v,"requestData " + this.ID + myData);
     }
     
@@ -251,8 +253,8 @@ public class AggerwalAlgoServer {
         this.other_trees = false;
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry pair = (HashMap.Entry)it.next();
-            int ID_v = (int) pair.getKey();
+            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+            int ID_v = Integer.parseInt(pair.getKey());
             this.neighbor_colors.put(ID_v,-1);
             HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
             data_v.put("self_color",-1);
@@ -287,6 +289,8 @@ public class AggerwalAlgoServer {
         // Kick off Listener
         AggerwalAlgoServer ns = new AggerwalAlgoServer(serverID, numServ, neighborFileName);
         TCPSocket s1 = new TCPSocket(ns.myPort, ns);
+        ns.copy_neighbor_data();
+        ns.maximize_priority();
         Thread t1=new Thread(s1);
         t1.start();   
     }
