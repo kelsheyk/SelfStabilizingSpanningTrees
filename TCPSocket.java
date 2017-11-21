@@ -18,8 +18,6 @@ import java.util.Scanner;
 public class TCPSocket implements Runnable {
     int portNum;
     AggerwalAlgoServer ns;
-    ServerSocket listener;
-    //Socket currentSocket;
 
     public TCPSocket(int portNum, AggerwalAlgoServer ns) {
         this.portNum = portNum;
@@ -30,7 +28,6 @@ public class TCPSocket implements Runnable {
     void _send(int ID_v, String msg) {
         try {
             ServerTable.ServerInfo server_v = ns.neighbors.servers.get(Integer.toString(ID_v));
-            System.out.println("Server " + ns.ID + " talking to " +server_v.hostAddress + " : " + server_v.portNum);
             Socket s = new Socket(server_v.hostAddress, server_v.portNum);
             PrintWriter pout = new PrintWriter(s.getOutputStream());
             pout.println(msg);
@@ -62,14 +59,14 @@ public class TCPSocket implements Runnable {
 
     public void run() {
         try {
-            this.listener = new ServerSocket(this.portNum);
+            ServerSocket listener = new ServerSocket(this.portNum);
             Socket s;
-            while((s = this.listener.accept()) != null) {
+            String command;
+            while((s = listener.accept()) != null) {
                 Scanner sc = new Scanner(s.getInputStream());
-                String command;
                 command = sc.nextLine();
                 System.out.println(command);
-                //_receive(s,command);
+                _receive(s,command);
             }
         } catch (Exception e) {
           System.err.println("Server aborted:" + e);
