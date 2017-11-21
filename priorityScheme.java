@@ -5,6 +5,7 @@
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  *
@@ -21,6 +22,14 @@ public class priorityScheme {
         this.priority = new ArrayList<Integer>();
         // TODO: pass in predefined priority
         this.priority.add(0);
+    }
+
+    public priorityScheme(String repr) {
+        ArrayList<String> myList = new ArrayList<String>(Arrays.asList(repr.split(",")));
+        this.priority = new ArrayList<Integer>();
+        for (int i=0; i<myList.size(); i++) {
+            this.priority.add(Integer.parseInt(myList.get(i)));
+        }
     }
 
     public String toString() { 

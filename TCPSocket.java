@@ -29,8 +29,8 @@ public class TCPSocket implements Runnable {
 
     void _send(int ID_v, String msg) {
         try {
-            
             ServerTable.ServerInfo server_v = ns.neighbors.servers.get(Integer.toString(ID_v));
+            System.out.println("Server " + ns.ID + " talking to " +server_v.hostAddress + " : " + server_v.portNum);
             Socket s = new Socket(server_v.hostAddress, server_v.portNum);
             PrintWriter pout = new PrintWriter(s.getOutputStream());
             pout.println(msg);
@@ -52,7 +52,6 @@ public class TCPSocket implements Runnable {
         }
         if (tokens[0].equals("requestData")) {
             //    sender's ID
-            // TODO: send my data when requesting
             ns.receiveData(Integer.parseInt(sendersID), tokens[2]);
             ns.sendData(Integer.parseInt(sendersID));
         } else if (tokens[0].equals("sendData")) {
@@ -69,7 +68,8 @@ public class TCPSocket implements Runnable {
                 Scanner sc = new Scanner(s.getInputStream());
                 String command;
                 command = sc.nextLine();
-                _receive(s,command);
+                System.out.println(command);
+                //_receive(s,command);
             }
         } catch (Exception e) {
           System.err.println("Server aborted:" + e);

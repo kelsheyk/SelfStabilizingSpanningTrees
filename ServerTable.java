@@ -9,7 +9,6 @@ public class ServerTable{
             public final int portNum;
 
             public ServerInfo(String idHostPort){
-                System.out.println(idHostPort);
                 String[] idHostPortArray = idHostPort.split(":");
                 this.ID = idHostPortArray[0];
                 this.hostAddress = idHostPortArray[1];
@@ -20,7 +19,6 @@ public class ServerTable{
         public ServerTable(int numOfServers, String[] arrayOfServerInfo){
             for(int i = 0; i < numOfServers; i++){
                 ServerInfo thisServ = new ServerInfo(arrayOfServerInfo[i]);
-                System.out.println(thisServ.ID + " : " + thisServ.hostAddress);
                 this.servers.put(thisServ.ID, thisServ);
             }
         }

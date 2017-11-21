@@ -64,8 +64,27 @@ public class AggerwalAlgoServer {
         this.other_trees=false;
         this.parent = -1;
         this.color = -1;
-        this.distance = -1;
+        this.distance = 0;
         this.priority = new priorityScheme();
+        
+        // initialize neighbor_data
+        this.neighbor_data = new JSONObject();
+        HashMap data_v = new HashMap();
+        data_v.put("priority", "0");
+        data_v.put("distance", 0);
+        data_v.put("parent", -1);
+        data_v.put("color", -1);
+        data_v.put("self_color", -1);
+        data_v.put("other_trees", true);
+        Iterator it = this.neighbors.servers.entrySet().iterator();
+        while (it.hasNext()) {
+            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+            int ID_v = Integer.parseInt(pair.getKey());
+            if (ID_v != this.ID) {
+                this.neighbor_data.put(ID_v, data_v);
+            }
+        }
+        
     }
        
     // copies neighbor data into local vars, performs coloring tasks
@@ -74,7 +93,9 @@ public class AggerwalAlgoServer {
         while (it.hasNext()) {
             HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
             int ID_v = Integer.parseInt(pair.getKey());
-            requestData(ID_v);
+            if (ID_v != this.ID) {
+                requestData(ID_v);
+            }
         }
     }
     
@@ -89,32 +110,34 @@ public class AggerwalAlgoServer {
         while (it.hasNext()) {
             HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
             int ID_v = Integer.parseInt(pair.getKey());
-            HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
-            priorityScheme priority_v = new priorityScheme((ArrayList<Integer>) data_v.get("priority"));
-            int distance_v = (int) data_v.get("distance");
-            //TODO: since ID based priority is unique, shoud we base on distance,priority?
-            if ((priority_v.greaterThan(max_priority.priority)) || 
-                ((priority_v.equals(max_priority.priority)) && (distance_v > max_distance))
-            ) {
-                max_priority = priority_v;
-                max_distance = distance_v;
-                max_node = ID_v;
-            }
-            
-            // force root to extend 1st, if about to be overrun by a suffix ID?
-            // NOT needed for correctness, see statement F
-            
-            // if u can improve its priority, by becoming child of another 
-            // neighbor, do so, otherwise become root 
-            if ((max_priority.greaterThan(this.priority.priority)) ||
-                ((max_priority.equals(this.priority.priority)) && (max_distance > this.distance))
-            ) {
-                this.priority = max_priority;
-                this.distance = max_distance + 1;
-                this.parent = max_node;
-            } else {
-                this.distance = 0;
-                this.parent = -1;
+            if (ID_v != this.ID) {
+                HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
+                int distance_v = (int) data_v.get("distance");
+                //TODO: since ID based priority is unique, shoud we base on distance,priority?
+                if ((priority_v.greaterThan(max_priority.priority)) || 
+                    ((priority_v.equals(max_priority.priority)) && (distance_v > max_distance))
+                ) {
+                    max_priority = priority_v;
+                    max_distance = distance_v;
+                    max_node = ID_v;
+                }
+                
+                // force root to extend 1st, if about to be overrun by a suffix ID?
+                // NOT needed for correctness, see statement F
+                
+                // if u can improve its priority, by becoming child of another 
+                // neighbor, do so, otherwise become root 
+                if ((max_priority.greaterThan(this.priority.priority)) ||
+                    ((max_priority.equals(this.priority.priority)) && (max_distance > this.distance))
+                ) {
+                    this.priority = max_priority;
+                    this.distance = max_distance + 1;
+                    this.parent = max_node;
+                } else {
+                    this.distance = 0;
+                    this.parent = -1;
+                }
             }
         }
     }
@@ -191,10 +214,7 @@ public class AggerwalAlgoServer {
     // Sends request for data to v
     void requestData(int ID_v) {
         String myData = this.packageSharedData(ID_v);
-        System.out.println(ID_v);
-        System.out.println(this.ID);
-        System.out.println(myData);
-        this.tcpSocket._send(ID_v,"requestData " + this.ID + myData);
+        this.tcpSocket._send(ID_v,"requestData " + this.ID + " " + myData);
     }
     
     //sends shared vars in stringified JSON form to v
