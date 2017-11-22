@@ -102,7 +102,6 @@ public class AggerwalAlgoServer {
     
     // become child of neighbor with max priority or become root
     void maximize_priority() {
-        System.out.println("FOOOOOOO");
         int max_node = -1; //this.ID;
         priorityScheme max_priority = new priorityScheme("-1"); //this.priority;
         int max_distance = -1; //this.distance;
@@ -271,13 +270,6 @@ public class AggerwalAlgoServer {
                 resetColor(color_v);
             }
         }
-        // TODO : is this the right place to call?
-        // Recompute
-        System.out.println("HEREEEE");
-        maximize_priority();
-        next_color();
-        detect_trees();
-        extend_priority();
     }
     
     void resetColor(int newColor) {
@@ -331,6 +323,11 @@ public class AggerwalAlgoServer {
         int rounds = 0;
         while (rounds < 5) {
             ns.copy_neighbor_data();
+            // TODO : wait for copy to complete
+            ns.maximize_priority();
+            ns.next_color();
+            ns.detect_trees();
+            ns.extend_priority();
             rounds++;
         }
         for (int i=0; i<999999; i++) {
