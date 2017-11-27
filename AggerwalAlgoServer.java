@@ -33,7 +33,6 @@ public class AggerwalAlgoServer {
     JSONObject neighbor_data;
     
     public AggerwalAlgoServer (int id, int numServ, String neighborFile){
-        //super(id,numServ);
         this.ID = id;
         Scanner scanner = new Scanner(System.in);
         String userInput;
@@ -55,7 +54,7 @@ public class AggerwalAlgoServer {
         } catch (Exception e) {
             System.out.println(e);
         } 
-        this.neighbors = new ServerTable(numServ, servers);
+        this.neighbors = new ServerTable(i, servers);
         String s_id = Integer.toString(this.ID);
         ServerTable.ServerInfo myInfo = this.neighbors.servers.get(s_id);
         this.myHost = myInfo.hostAddress;
@@ -98,7 +97,7 @@ public class AggerwalAlgoServer {
             }
         }
     }
-    
+
     
     // become child of neighbor with max priority or become root
     void maximize_priority() {
@@ -190,7 +189,8 @@ public class AggerwalAlgoServer {
         if ((this.parent == -1) &&
             (this.other_trees == true)
         ) {
-            appendEntry();
+            // always append UID
+            this.priority.priority.add(this.ID);
             resetColor(this.ID);
         }
         
@@ -294,12 +294,7 @@ public class AggerwalAlgoServer {
         }
     }
     
-    void appendEntry() { 
-        // always append UID
-        this.priority.priority.add(this.ID);
-    }
-    
-    public static void main (String[] args) {
+    public synchronized static void main (String[] args) {
         int serverID;
         int numServ;
         if (args.length != 3) {
@@ -321,7 +316,7 @@ public class AggerwalAlgoServer {
 
         // TODO: figure out a stopping condition
         int rounds = 0;
-        while (rounds < 5) {
+        while (rounds < 50) {
             ns.copy_neighbor_data();
             // TODO : wait for copy to complete
             ns.maximize_priority();
@@ -330,9 +325,5 @@ public class AggerwalAlgoServer {
             ns.extend_priority();
             rounds++;
         }
-        for (int i=0; i<999999; i++) {
-            ;
-        }
-        System.exit(0);
     }
 }
