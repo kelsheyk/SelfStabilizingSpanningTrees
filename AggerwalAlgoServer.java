@@ -123,26 +123,26 @@ public class AggerwalAlgoServer {
                     max_node = ID_v;
                     //System.out.println("MAX_NODE= " +max_node + "  " + priority_v.toString() + "    " + max_priority.toString());
                 }
-                
-                // force root to extend 1st, if about to be overrun by a suffix ID?
-                // NOT needed for correctness, see statement F
-                
-                // if u can improve its priority, by becoming child of another 
-                // neighbor, do so, otherwise become root
-                
-                if ((max_priority.greaterThan(this.priority.priority)) ||
-                    ((max_priority.equals(this.priority.priority)) && (max_distance > this.distance))
-                ) {
-                    this.priority = max_priority;
-                    this.distance = max_distance + 1;
-                    this.parent = max_node;
-                    System.out.println("Node " + this.ID + " is child of " + max_node);
-                } else {
-                    this.distance = 0;
-                    this.parent = -1;
-                    System.out.println("Node " + this.ID + " is root");
-                }
             }
+        }
+        
+        // force root to extend 1st, if about to be overrun by a suffix ID?
+        // NOT needed for correctness, see statement F
+        
+        // if u can improve its priority, by becoming child of another 
+        // neighbor, do so, otherwise become root
+        
+        if ((max_priority.greaterThan(this.priority.priority)) ||
+            ((max_priority.equals(this.priority.priority)) && (max_distance > this.distance))
+        ) {
+            this.priority = max_priority;
+            this.distance = max_distance + 1;
+            this.parent = max_node;
+            System.out.println("Node " + this.ID + " is child of " + max_node);
+        } else {
+            this.distance = 0;
+            this.parent = -1;
+            System.out.println("Node " + this.ID + " is root");
         }
     }
     
