@@ -260,8 +260,7 @@ public class AggerwalAlgoServer {
             pout.println("requestData " + this.ID + " " + myData);
             pout.flush();
         } catch (IOException e) {
-            //TODO: if cannot connect assume crash? remove from neighbors?
-            System.out.println("DEBUG: from s" + this.ID + " removing " + ID_v);
+            //if cannot connect assume crash - remove from neighbors
             Set keys = this.neighbors.servers.keySet();
             String keylist = "";
             for (Iterator i = keys.iterator(); i.hasNext();) {
@@ -269,13 +268,17 @@ public class AggerwalAlgoServer {
             }
             System.out.println("DEBUG: from s" + this.ID + " keylist " + keylist);
             this.neighbors.servers.remove(Integer.toString(ID_v));
-            //System.err.println("Send error: " + e);
+            System.err.println("Send error: " + e);
         } finally { 
             try {
-                pout.close();
-                s.close();
+                if (pout != null) {
+                    pout.close();
+                }
+                if (s != null) {
+                    s.close();
+                }
             } catch(IOException ioe) { 
-                //ioe.printStackTrace(); 
+                ioe.printStackTrace(); 
             }
         }
         return;
@@ -319,11 +322,7 @@ public class AggerwalAlgoServer {
                   resetColor(color_v);
               }
         }
-        this.detect_trees();
-        this.maximize_priority();
-        this.extend_priority();
-        this.next_color();
-        this.rounds++;
+        
         //if (rounds < 10) {
         //    this.copyNeighborData();
         //} else {

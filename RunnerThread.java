@@ -16,14 +16,18 @@ class RunnerThread extends Thread implements Runnable {
 
     public void run() {
         int rounds = 0;
-        while (rounds < 5) {
+        while (rounds < 10) {
             if (rounds == 0 ) {
                 try {
-                    Thread.sleep(10000);
+                    Thread.sleep(5000);
                 } catch (Exception e) {}
             } else {
+                ns.detect_trees();
+                ns.maximize_priority();
+                ns.extend_priority();
+                ns.next_color(); 
                 try {
-                    Thread.sleep(5000);
+                    Thread.sleep(3000);
                 } catch (Exception e) {}
             }
             ns.copy_neighbor_data();
@@ -31,7 +35,6 @@ class RunnerThread extends Thread implements Runnable {
             rounds++;
         }
         ns.stop = true;
-        System.out.println("DEBUG: from runner" + ns.ID + " I'm deaad.");
         return;
     }
 }
