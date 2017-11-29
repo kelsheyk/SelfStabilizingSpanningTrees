@@ -222,16 +222,24 @@ public class AggerwalAlgoServer {
     // Sends request for data to v
     void requestData(int ID_v) {
         String myData = this.packageSharedData(ID_v);
+        PrintWriter pout = null;
+        Socket s = null;
         try {
             ServerTable.ServerInfo server_v = this.neighbors.servers.get(Integer.toString(ID_v));
-            Socket s = new Socket(server_v.hostAddress, server_v.portNum);
-            PrintWriter pout = new PrintWriter(s.getOutputStream());
-            System.out.println(this.ID  + " SENDING: requestData " + this.ID + " " + myData);
+            s = new Socket(server_v.hostAddress, server_v.portNum);
+            pout = new PrintWriter(s.getOutputStream());
             pout.println("requestData " + this.ID + " " + myData);
             pout.flush();
         } catch (IOException e) {
             //TODO: if cannot connect assume crash? remove from neighbors?
             System.err.println("Send error: " + e);
+        } finally { 
+            try {
+                pout.close();
+                s.close();
+            } catch(IOException ioe) { 
+                ioe.printStackTrace(); 
+            }
         }
     }
     
@@ -276,7 +284,8 @@ public class AggerwalAlgoServer {
         this.detect_trees();
         this.maximize_priority();
         this.extend_priority();
-        //this.copy_neighbor_data();
+        this.next_color();
+        this.copy_neighbor_data();
     }
     
     void resetColor(int newColor) {
