@@ -23,13 +23,13 @@ public class TCPSocket extends Thread {
     }
 
     public void run() {
+
         BufferedReader in = null; 
          PrintWriter out = null; 
          try { 
             in = new BufferedReader(
                new InputStreamReader(mySocket.getInputStream()));
             
-            while(notDone) { 
                 String clientCommand = in.readLine();
                 if (clientCommand != null) {
                     String[] tokens = clientCommand.split(" ");
@@ -67,7 +67,6 @@ public class TCPSocket extends Thread {
                         //          sender's ID,              dataJsonString            
                         ns.receiveData(sendersID, tokens[2]);
                     }
-                } 
             } 
          } catch (Exception e) { 
             e.printStackTrace(); 
@@ -79,6 +78,7 @@ public class TCPSocket extends Thread {
             } catch(IOException ioe) { 
                ioe.printStackTrace(); 
             } 
-         }       
+         }
+         return;       
     }
 }

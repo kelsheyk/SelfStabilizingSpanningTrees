@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.io.*;
 import java.net.*;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class AggerwalAlgoServer {
     // Needed for communication
@@ -18,6 +19,9 @@ public class AggerwalAlgoServer {
     int myPort;
     ServerTable neighbors;
     int rounds = 0;
+    Timer t = new Timer();
+    boolean printed = false;
+    boolean stop = false;
 
     int ID;
     
@@ -87,17 +91,35 @@ public class AggerwalAlgoServer {
     }
        
     // copies neighbor data into local vars, performs coloring tasks
+    public static class copyNeighborData extends TimerTask {
+        AggerwalAlgoServer ns;
+
+        public copyNeighborData (AggerwalAlgoServer ns) {
+            this.ns = ns;
+        }
+
+        public void run() {
+            Iterator it = ns.neighbors.servers.entrySet().iterator();
+            while (it.hasNext()) {
+                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                if (ID_v != ns.ID) {
+                    ns.requestData(ID_v);
+                }
+            }
+        }
+    }
+
     void copy_neighbor_data() {
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
             HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
             int ID_v = Integer.parseInt(pair.getKey());
             if (ID_v != this.ID) {
-                requestData(ID_v);
+                this.requestData(ID_v);
             }
         }
     }
-
     
     // become child of neighbor with max priority or become root
     void maximize_priority() {
@@ -140,14 +162,15 @@ public class AggerwalAlgoServer {
             this.priority = max_priority;
             this.distance = max_distance + 1;
             if (this.parent != max_node) {
-                System.out.println("Node " + this.ID + " is child of " + max_node);
+                System.out.println("======> Node " + this.ID + " is child of " + max_node);
             }
             this.parent = max_node;
             
         } else {
             this.distance = 0;
-            if (this.parent != -1) {
-                System.out.println("Node " + this.ID + " is root");
+            if ((this.parent != -1) && (!this.printed)) {
+                System.out.println("======> Node " + this.ID + " is root");
+                this.printed=true;
             }
             this.parent = -1;
         }
@@ -238,15 +261,24 @@ public class AggerwalAlgoServer {
             pout.flush();
         } catch (IOException e) {
             //TODO: if cannot connect assume crash? remove from neighbors?
-            System.err.println("Send error: " + e);
+            System.out.println("DEBUG: from s" + this.ID + " removing " + ID_v);
+            Set keys = this.neighbors.servers.keySet();
+            String keylist = "";
+            for (Iterator i = keys.iterator(); i.hasNext();) {
+                keylist = keylist + (String) i.next();
+            }
+            System.out.println("DEBUG: from s" + this.ID + " keylist " + keylist);
+            this.neighbors.servers.remove(Integer.toString(ID_v));
+            //System.err.println("Send error: " + e);
         } finally { 
             try {
                 pout.close();
                 s.close();
             } catch(IOException ioe) { 
-                ioe.printStackTrace(); 
+                //ioe.printStackTrace(); 
             }
         }
+        return;
     }
     
     //receives data from v. copies to local vars. Coloring stuff
@@ -292,11 +324,11 @@ public class AggerwalAlgoServer {
         this.extend_priority();
         this.next_color();
         this.rounds++;
-        if (rounds < 10) {
-            this.copy_neighbor_data();
-        } else {
-            System.exit(0);
-        }
+        //if (rounds < 10) {
+        //    this.copyNeighborData();
+        //} else {
+        //    System.exit(0);
+        //}
     }
     
     void resetColor(int newColor) {
@@ -346,13 +378,17 @@ public class AggerwalAlgoServer {
             Socket s;
             String command;
             System.out.println("Starting server...");
-            ns.copy_neighbor_data();
-            while((s = listener.accept()) != null) {
+            //copyNeighborData copyTask = new copyNeighborData(ns);
+            //ns.t.schedule(copyTask, 5000, 5000);
+            RunnerThread r = new RunnerThread(ns);
+            r.start();
+            while((!ns.stop) && ((s = listener.accept()) != null)) {
                 TCPSocket s1 = new TCPSocket(s, ns);
                 s1.start();
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        System.exit(0);
     }
 }
