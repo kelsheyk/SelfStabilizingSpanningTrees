@@ -67,22 +67,22 @@ public class AggerwalAlgoServer {
         this.other_trees=false;
         this.parent = -1;
         this.color = -1;
-        this.distance = 0;
+        this.distance = this.ID;
         this.priority = new priorityScheme();
         
         // initialize neighbor_data
         this.neighbor_data = new JSONObject();
         HashMap data_v = new HashMap();
-        data_v.put("priority", "0");
         data_v.put("distance", 0);
         data_v.put("parent", -1);
         data_v.put("color", -1);
         data_v.put("self_color", -1);
-        data_v.put("other_trees", true);
+        data_v.put("other_trees", false);
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
             HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
             int ID_v = Integer.parseInt(pair.getKey());
+            data_v.put("priority", Integer.toString(ID_v));
             if (ID_v != this.ID) {
                 this.neighbor_data.put(ID_v, data_v);
             }
@@ -138,7 +138,7 @@ public class AggerwalAlgoServer {
                 int distance_v =  Integer.parseInt(data_v.get("distance").toString());
 
                 if ((priority_v.greaterThan(max_priority.priority)) || 
-                    ((priority_v.equals(max_priority.priority)) && (distance_v > max_distance))
+                    ((priority_v.equals(max_priority.priority)) && (distance_v < max_distance))
                 ) {
                     max_priority.priority = priority_v.priority;
                     max_distance = distance_v;
@@ -162,6 +162,8 @@ public class AggerwalAlgoServer {
             this.priority = max_priority;
             this.distance = max_distance + 1;
             if (this.parent != max_node) {
+                //System.out.println(this.ID +"="+this.priority.toString()+",dist="+this.distance+",color="+this.color+
+                //        ";;;; max="+max_priority.toString()+",dist="+max_distance+",color"+max_color);
                 System.out.println("======> Node " + this.ID + " is child of " + max_node);
             }
             this.parent = max_node;
@@ -169,6 +171,8 @@ public class AggerwalAlgoServer {
         } else {
             this.distance = 0;
             if ((this.parent != -1) && (!this.printed)) {
+                //System.out.println(this.ID +"="+this.priority.toString()+",dist="+this.distance+",color="+this.color+
+                //        ";;;; max="+max_priority.toString()+",dist="+max_distance+",color"+max_color);
                 System.out.println("======> Node " + this.ID + " is root");
                 this.printed=true;
             }
@@ -311,7 +315,7 @@ public class AggerwalAlgoServer {
         ) {
               //record color of neighbor if needed
               int color_v = Integer.parseInt(data.get("color").toString());
-              if ((this.color != 0) && (color_v !=0)) {
+              if ((this.color != -1) && (color_v != -1)) {
                   this.neighbor_colors.put(ID_v,color_v);
                   if (this.color != color_v) {
                       this.other_trees = true;

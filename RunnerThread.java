@@ -16,7 +16,7 @@ class RunnerThread extends Thread implements Runnable {
 
     public void run() {
         int rounds = 0;
-        while (rounds < 10) {
+        while (rounds < 20) {
             if (rounds == 0 ) {
                 try {
                     Thread.sleep(5000);
@@ -24,14 +24,14 @@ class RunnerThread extends Thread implements Runnable {
             } else {
                 ns.detect_trees();
                 ns.maximize_priority();
-                ns.extend_priority();
-                ns.next_color(); 
+                ns.next_color();
+                ns.extend_priority(); 
                 try {
                     Thread.sleep(3000);
                 } catch (Exception e) {}
             }
             ns.copy_neighbor_data();
-            System.out.println("Server " + ns.ID + " round " + rounds + " done.");
+            //System.out.println("Server " + ns.ID + " round " + rounds + " done.");
             rounds++;
         }
         ns.stop = true;
