@@ -27,4 +27,8 @@ public class ServerTable{
             ServerInfo newServer = new ServerInfo(idHostPort);
             this.servers.put(newServer.ID, newServer);
         }
+
+        public void removeServer(int ID_v) {
+            this.servers.remove(Integer.toString(ID_v));
+        }
     }

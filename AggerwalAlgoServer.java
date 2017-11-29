@@ -8,8 +8,8 @@ import org.json.simple.*;
 import org.json.simple.parser.*;
 import java.util.ArrayList;
 import java.util.Scanner;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.*;
+import java.net.*;
 
 
 public class AggerwalAlgoServer {
@@ -19,7 +19,6 @@ public class AggerwalAlgoServer {
     ServerTable neighbors;
     
     int ID;
-    TCPSocket tcpSocket;
     
     // "shared" vars
     priorityScheme priority; 
@@ -147,7 +146,7 @@ public class AggerwalAlgoServer {
     }
     
     void detect_trees() {
-        // Diff tress if priority the same, but color diff
+        // Diff tress if priority the same
         boolean same_tree = true;
         //boolean all_child_echo = true;
         boolean color_same = true;
@@ -184,7 +183,7 @@ public class AggerwalAlgoServer {
         }
         
     }
-    
+
     void extend_priority() {
         if ((this.parent == -1) &&
             (this.other_trees == true)
@@ -223,17 +222,21 @@ public class AggerwalAlgoServer {
     // Sends request for data to v
     void requestData(int ID_v) {
         String myData = this.packageSharedData(ID_v);
-        this.tcpSocket._send(ID_v,"requestData " + this.ID + " " + myData);
-    }
-    
-    //sends shared vars in stringified JSON form to v
-    void sendData(int ID_v) {
-        String myData = this.packageSharedData(ID_v);
-        this.tcpSocket._send(ID_v, "sendData " + this.ID + " " + myData);
+        try {
+            ServerTable.ServerInfo server_v = this.neighbors.servers.get(Integer.toString(ID_v));
+            Socket s = new Socket(server_v.hostAddress, server_v.portNum);
+            PrintWriter pout = new PrintWriter(s.getOutputStream());
+            System.out.println(this.ID  + " SENDING: requestData " + this.ID + " " + myData);
+            pout.println("requestData " + this.ID + " " + myData);
+            pout.flush();
+        } catch (IOException e) {
+            //TODO: if cannot connect assume crash? remove from neighbors?
+            System.err.println("Send error: " + e);
+        }
     }
     
     //receives data from v. copies to local vars. Coloring stuff
-    void receiveData(int ID_v, String dataString) {
+    public void receiveData(int ID_v, String dataString) {
         JSONParser parser = new JSONParser();
         HashMap data = new HashMap();
         try {
@@ -270,31 +273,37 @@ public class AggerwalAlgoServer {
                 resetColor(color_v);
             }
         }
+        this.detect_trees();
+        this.maximize_priority();
+        this.extend_priority();
+        //this.copy_neighbor_data();
     }
     
     void resetColor(int newColor) {
         this.color = newColor;
         //this.mode = 0; // or Broadcast
         this.other_trees = false;
-        Iterator it = this.neighbors.servers.entrySet().iterator();
-        while (it.hasNext()) {
-            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-            int ID_v = Integer.parseInt(pair.getKey());
-            if (ID_v != this.ID) {
-                this.neighbor_colors.put(ID_v,-1);
-                HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
-                data_v.put("self_color",-1);
-                this.neighbor_data.put(ID_v, data_v);
-                // if v is child, clear color
-                if (Integer.parseInt((data_v.get("parent").toString())) == ID) {
-                    data_v.put("color", -1);
-                    this.neighbor_data.put(ID_v, data_v);   
+        if (this.color != newColor) {
+            Iterator it = this.neighbors.servers.entrySet().iterator();
+            while (it.hasNext()) {
+                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                if (ID_v != this.ID) {
+                    this.neighbor_colors.put(ID_v,-1);
+                    HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                    data_v.put("self_color",-1);
+                    this.neighbor_data.put(ID_v, data_v);
+                    // if v is child, clear color
+                    if (Integer.parseInt((data_v.get("parent").toString())) == ID) {
+                        data_v.put("color", -1);
+                        this.neighbor_data.put(ID_v, data_v);   
+                    }
                 }
             }
         }
     }
     
-    public synchronized static void main (String[] args) {
+    public static void main (String[] args) {
         int serverID;
         int numServ;
         if (args.length != 3) {
@@ -310,20 +319,20 @@ public class AggerwalAlgoServer {
             
         // Kick off Listener
         AggerwalAlgoServer ns = new AggerwalAlgoServer(serverID, numServ, neighborFileName);
-        TCPSocket s1 = new TCPSocket(ns.myPort, ns);
-        Thread t1=new Thread(s1);
-        t1.start();
+        
 
-        // TODO: figure out a stopping condition
-        int rounds = 0;
-        while (rounds < 50) {
+        try {
+            ServerSocket listener = new ServerSocket(ns.myPort);
+            Socket s;
+            String command;
+            System.out.println("Starting server...");
             ns.copy_neighbor_data();
-            // TODO : wait for copy to complete
-            ns.maximize_priority();
-            ns.next_color();
-            ns.detect_trees();
-            ns.extend_priority();
-            rounds++;
+            while((s = listener.accept()) != null) {
+                TCPSocket s1 = new TCPSocket(s, ns);
+                s1.start();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }
