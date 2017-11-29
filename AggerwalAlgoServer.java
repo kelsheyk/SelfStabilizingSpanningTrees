@@ -17,7 +17,8 @@ public class AggerwalAlgoServer {
     String myHost;
     int myPort;
     ServerTable neighbors;
-    
+    int rounds = 0;
+
     int ID;
     
     // "shared" vars
@@ -51,7 +52,7 @@ public class AggerwalAlgoServer {
                 i++;
             }
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
         } 
         this.neighbors = new ServerTable(i, servers);
         String s_id = Integer.toString(this.ID);
@@ -103,6 +104,7 @@ public class AggerwalAlgoServer {
         int max_node = -1; //this.ID;
         priorityScheme max_priority = new priorityScheme("-1"); //this.priority;
         int max_distance = -1; //this.distance;
+        int max_color = -1;
         // we have to compare on priority AND distance.
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
@@ -113,35 +115,41 @@ public class AggerwalAlgoServer {
                 priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
                 int distance_v =  Integer.parseInt(data_v.get("distance").toString());
 
-                //TODO: since ID based priority is unique, shoud we base on distance,priority?
                 if ((priority_v.greaterThan(max_priority.priority)) || 
                     ((priority_v.equals(max_priority.priority)) && (distance_v > max_distance))
                 ) {
                     max_priority.priority = priority_v.priority;
                     max_distance = distance_v;
                     max_node = ID_v;
-                    //System.out.println("MAX_NODE= " +max_node + "  " + priority_v.toString() + "    " + max_priority.toString());
+                    max_color =  Integer.parseInt(data_v.get("color").toString());
                 }
             }
         }
+        //System.out.println(this.ID +"="+this.priority.toString()+",dist="+this.distance+",color="+this.color+
+        //        ";;;; max="+max_priority.toString()+",dist="+max_distance+",color"+max_color);
+        
         
         // force root to extend 1st, if about to be overrun by a suffix ID?
         // NOT needed for correctness, see statement F
         
         // if u can improve its priority, by becoming child of another 
         // neighbor, do so, otherwise become root
-        
         if ((max_priority.greaterThan(this.priority.priority)) ||
-            ((max_priority.equals(this.priority.priority)) && (max_distance > this.distance))
+            ((max_priority.equals(this.priority.priority)) && (max_distance < this.distance))
         ) {
             this.priority = max_priority;
             this.distance = max_distance + 1;
+            if (this.parent != max_node) {
+                System.out.println("Node " + this.ID + " is child of " + max_node);
+            }
             this.parent = max_node;
-            System.out.println("Node " + this.ID + " is child of " + max_node);
+            
         } else {
             this.distance = 0;
+            if (this.parent != -1) {
+                System.out.println("Node " + this.ID + " is root");
+            }
             this.parent = -1;
-            System.out.println("Node " + this.ID + " is root");
         }
     }
     
@@ -211,8 +219,6 @@ public class AggerwalAlgoServer {
         myData.put("parent", this.parent);
         myData.put("color", this.color);
         myData.put("other_trees", this.other_trees);
-        // TODO: don't think I need this
-        //myData.put("self_color", (int) this.neighbor_colors.get(ID_v));
         JSONObject json = new JSONObject();
         json.putAll(myData);
         String stringData = json.toJSONString();
@@ -259,7 +265,7 @@ public class AggerwalAlgoServer {
             // TODO: don't think I need this
             data.put("self_color", dataJson.get("self_color"));
         } catch (Exception e) {
-            System.out.println("JSON parse error: " + e);
+            e.printStackTrace();
         }
         
         this.neighbor_data.put(ID_v,data);
@@ -268,24 +274,29 @@ public class AggerwalAlgoServer {
         if ((this.priority.equals(priority_v.priority)) &&
             (Math.abs(distance - distance_v) <= 1)
         ) {
-            //record color of neighbor if needed
-            int color_v = Integer.parseInt(data.get("color").toString());
-            if ((this.color != 0) && (color_v !=0)) {
-                this.neighbor_colors.put(ID_v,color_v);
-                if (this.color != color_v) {
-                    this.other_trees = true;
-                }
-            }
-            // if parent, copy color
-            if ((this.parent == ID_v) && (color != color_v)) {
-                resetColor(color_v);
-            }
+              //record color of neighbor if needed
+              int color_v = Integer.parseInt(data.get("color").toString());
+              if ((this.color != 0) && (color_v !=0)) {
+                  this.neighbor_colors.put(ID_v,color_v);
+                  if (this.color != color_v) {
+                      this.other_trees = true;
+                  }
+              }
+              // if parent, copy color
+              if ((this.parent == ID_v) && (color != color_v)) {
+                  resetColor(color_v);
+              }
         }
         this.detect_trees();
         this.maximize_priority();
         this.extend_priority();
         this.next_color();
-        this.copy_neighbor_data();
+        this.rounds++;
+        if (rounds < 10) {
+            this.copy_neighbor_data();
+        } else {
+            System.exit(0);
+        }
     }
     
     void resetColor(int newColor) {

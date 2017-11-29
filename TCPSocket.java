@@ -30,41 +30,43 @@ public class TCPSocket extends Thread {
                new InputStreamReader(mySocket.getInputStream()));
             
             while(notDone) { 
-                String clientCommand = in.readLine(); 
-                String[] tokens = clientCommand.split(" ");
-                // If new id:host:port before, add it to neighbors
-                String sendersStrID = tokens[1];
-                int sendersID = Integer.parseInt(tokens[1]);
-                if (ns.neighbors.servers.get(sendersStrID) == null) {
-                    String newServer = sendersStrID+":"+mySocket.getInetAddress();
-                    ns.neighbors.addServer(newServer);
-                }
-                if (tokens[0].equals("requestData")) {
-                    //    sender's ID,              dataJsonString
-                    ns.receiveData(sendersID, tokens[2]);
-                    String myData = ns.packageSharedData(sendersID);
-                    ServerTable.ServerInfo server_v = ns.neighbors.servers.get(sendersStrID);
-                    PrintWriter pout = null;
-                    Socket s = null;
-                    try {
-                        s = new Socket(server_v.hostAddress, server_v.portNum);
-                        pout = new PrintWriter(s.getOutputStream());
-                        pout.println("sendData " + sendersStrID + " " + myData);
-                        pout.flush();
-                    } catch (Exception e) { 
-                        e.printStackTrace(); 
-                    } 
-                    finally { 
-                        try {
-                            pout.close();
-                            s.close();
-                        } catch(IOException ioe) { 
-                            ioe.printStackTrace(); 
-                        }
+                String clientCommand = in.readLine();
+                if (clientCommand != null) {
+                    String[] tokens = clientCommand.split(" ");
+                    // If new id:host:port before, add it to neighbors
+                    String sendersStrID = tokens[1];
+                    int sendersID = Integer.parseInt(tokens[1]);
+                    if (ns.neighbors.servers.get(sendersStrID) == null) {
+                        String newServer = sendersStrID+":"+mySocket.getInetAddress();
+                        ns.neighbors.addServer(newServer);
                     }
-                } else if (tokens[0].equals("sendData")) {
-                    //          sender's ID,              dataJsonString            
-                    ns.receiveData(sendersID, tokens[2]);
+                    if (tokens[0].equals("requestData")) {
+                        //    sender's ID,              dataJsonString
+                        ns.receiveData(sendersID, tokens[2]);
+                        String myData = ns.packageSharedData(sendersID);
+                        ServerTable.ServerInfo server_v = ns.neighbors.servers.get(sendersStrID);
+                        PrintWriter pout = null;
+                        Socket s = null;
+                        try {
+                            s = new Socket(server_v.hostAddress, server_v.portNum);
+                            pout = new PrintWriter(s.getOutputStream());
+                            pout.println("sendData " + sendersStrID + " " + myData);
+                            pout.flush();
+                        } catch (Exception e) { 
+                            e.printStackTrace(); 
+                        } 
+                        finally { 
+                            try {
+                                pout.close();
+                                s.close();
+                            } catch(IOException ioe) { 
+                                ioe.printStackTrace(); 
+                            }
+                        }
+                    } else if (tokens[0].equals("sendData")) {
+                        //          sender's ID,              dataJsonString            
+                        ns.receiveData(sendersID, tokens[2]);
+                    }
                 } 
             } 
          } catch (Exception e) { 
