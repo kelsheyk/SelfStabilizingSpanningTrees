@@ -16,18 +16,26 @@ class RunnerThread extends Thread implements Runnable {
 
     public void run() {
         int rounds = 0;
-        while (rounds < 20) {
+        while (rounds < 50) {
             if (rounds == 0 ) {
                 try {
                     Thread.sleep(5000);
                 } catch (Exception e) {}
             } else {
-                ns.detect_trees();
-                ns.maximize_priority();
-                ns.next_color();
-                ns.extend_priority(); 
                 try {
-                    Thread.sleep(3000);
+                    ns.detect_trees();
+                } catch (Exception e) {}
+                try {
+                    ns.maximize_priority();
+                } catch (Exception e) {}
+                try {
+                    ns.next_color();
+                } catch (Exception e) {}
+                try {
+                    ns.extend_priority();
+                } catch (Exception e) {}
+                try {
+                    Thread.sleep(2500);
                 } catch (Exception e) {}
             }
             ns.copy_neighbor_data();

@@ -113,19 +113,21 @@ public class AggerwalAlgoServer {
     void copy_neighbor_data() {
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-            int ID_v = Integer.parseInt(pair.getKey());
-            if (ID_v != this.ID) {
-                this.requestData(ID_v);
-            }
+            try {
+               HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                if (ID_v != this.ID) {
+                    this.requestData(ID_v);
+                }
+            } catch (Exception e) {}
         }
     }
     
     // become child of neighbor with max priority or become root
     void maximize_priority() {
-        int max_node = -1; //this.ID;
-        priorityScheme max_priority = new priorityScheme("-1"); //this.priority;
-        int max_distance = -1; //this.distance;
+        int max_node = -1; 
+        priorityScheme max_priority = new priorityScheme("-1"); 
+        int max_distance = 10000; 
         int max_color = -1;
         // we have to compare on priority AND distance.
         Iterator it = this.neighbors.servers.entrySet().iterator();
@@ -264,13 +266,8 @@ public class AggerwalAlgoServer {
             pout.println("requestData " + this.ID + " " + myData);
             pout.flush();
         } catch (IOException e) {
-            //if cannot connect assume crash - remove from neighbors
-            Set keys = this.neighbors.servers.keySet();
-            String keylist = "";
-            for (Iterator i = keys.iterator(); i.hasNext();) {
-                keylist = keylist + (String) i.next();
-            }
-            System.out.println("DEBUG: from s" + this.ID + " keylist " + keylist);
+            //if cannot connect assume crash - remove from neighborData
+            this.neighbor_data.remove(ID_v);
             this.neighbors.servers.remove(Integer.toString(ID_v));
             System.err.println("Send error: " + e);
         } finally { 
