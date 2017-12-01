@@ -80,47 +80,33 @@ public class AggerwalAlgoServer {
         data_v.put("other_trees", false);
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-            int ID_v = Integer.parseInt(pair.getKey());
-            data_v.put("priority", Integer.toString(ID_v));
-            if (ID_v != this.ID) {
-                this.neighbor_data.put(ID_v, data_v);
-            }
+            try {
+                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                data_v.put("priority", Integer.toString(ID_v));
+                if (ID_v != this.ID) {
+                    this.neighbor_data.put(ID_v, data_v);
+                }
+            } catch (Exception e) {}
         }
         
     }
        
-    // copies neighbor data into local vars, performs coloring tasks
-    public static class copyNeighborData extends TimerTask {
-        AggerwalAlgoServer ns;
-
-        public copyNeighborData (AggerwalAlgoServer ns) {
-            this.ns = ns;
-        }
-
-        public void run() {
-            Iterator it = ns.neighbors.servers.entrySet().iterator();
+    void copy_neighbor_data() {
+        try {
+            Iterator it = this.neighbors.servers.entrySet().iterator();
             while (it.hasNext()) {
-                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-                int ID_v = Integer.parseInt(pair.getKey());
-                if (ID_v != ns.ID) {
-                    ns.requestData(ID_v);
+                try {
+                    HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                    int ID_v = Integer.parseInt(pair.getKey());
+                    if (ID_v != this.ID) {
+                        this.requestData(ID_v);
+                    }
+                } catch (Exception e) {
+                    System.out.println("-----"+this.ID+"----4");
                 }
             }
-        }
-    }
-
-    void copy_neighbor_data() {
-        Iterator it = this.neighbors.servers.entrySet().iterator();
-        while (it.hasNext()) {
-            try {
-               HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-                int ID_v = Integer.parseInt(pair.getKey());
-                if (ID_v != this.ID) {
-                    this.requestData(ID_v);
-                }
-            } catch (Exception e) {}
-        }
+        }  catch (Exception e) {}
     }
     
     // become child of neighbor with max priority or become root
@@ -132,22 +118,24 @@ public class AggerwalAlgoServer {
         // we have to compare on priority AND distance.
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (it.hasNext()) {
-            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-            int ID_v = Integer.parseInt(pair.getKey());
-            if (ID_v != this.ID) {
-                HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
-                priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
-                int distance_v =  Integer.parseInt(data_v.get("distance").toString());
+            try { 
+                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                if (ID_v != this.ID) {
+                    HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                    priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
+                    int distance_v =  Integer.parseInt(data_v.get("distance").toString());
 
-                if ((priority_v.greaterThan(max_priority.priority)) || 
-                    ((priority_v.equals(max_priority.priority)) && (distance_v < max_distance))
-                ) {
-                    max_priority.priority = priority_v.priority;
-                    max_distance = distance_v;
-                    max_node = ID_v;
-                    max_color =  Integer.parseInt(data_v.get("color").toString());
+                    if ((priority_v.greaterThan(max_priority.priority)) || 
+                        ((priority_v.equals(max_priority.priority)) && (distance_v < max_distance))
+                    ) {
+                        max_priority.priority = priority_v.priority;
+                        max_distance = distance_v;
+                        max_node = ID_v;
+                        max_color =  Integer.parseInt(data_v.get("color").toString());
+                    }
                 }
-            }
+            } catch (Exception e) {}
         }
         //System.out.println(this.ID +"="+this.priority.toString()+",dist="+this.distance+",color="+this.color+
         //        ";;;; max="+max_priority.toString()+",dist="+max_distance+",color"+max_color);
@@ -167,6 +155,7 @@ public class AggerwalAlgoServer {
                 //System.out.println(this.ID +"="+this.priority.toString()+",dist="+this.distance+",color="+this.color+
                 //        ";;;; max="+max_priority.toString()+",dist="+max_distance+",color"+max_color);
                 System.out.println("======> Node " + this.ID + " is child of " + max_node);
+                this.printed=false;
             }
             this.parent = max_node;
             
@@ -190,28 +179,30 @@ public class AggerwalAlgoServer {
         boolean other_tree_detected = false;
         Iterator it = this.neighbors.servers.entrySet().iterator();
         while (same_tree && it.hasNext()) {
-            HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-            int ID_v = Integer.parseInt(pair.getKey());
-            if (ID_v != this.ID) {
-                HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
-                priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
-                int distance_v = Integer.parseInt(data_v.get("distance").toString());
-                if ( (!(this.priority.equals(priority_v.priority))) ||
-                    (Math.abs(this.distance-distance_v) > 1)
-                ) {
-                    same_tree = false;
-                }
-                int color_v = Integer.parseInt(data_v.get("color").toString());
-                if (color_v != this.color) {
-                    color_same = false;
-                }
-                int parent_v = Integer.parseInt(data_v.get("parent").toString());
-                if (parent_v == this.ID) {
-                    if ((boolean) data_v.get("other_trees") == true) {
-                        other_tree_detected = true;
+            try {
+                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                int ID_v = Integer.parseInt(pair.getKey());
+                if (ID_v != this.ID) {
+                    HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                    priorityScheme priority_v = new priorityScheme((String) data_v.get("priority"));
+                    int distance_v = Integer.parseInt(data_v.get("distance").toString());
+                    if ( (!(this.priority.equals(priority_v.priority))) ||
+                        (Math.abs(this.distance-distance_v) > 1)
+                    ) {
+                        same_tree = false;
+                    }
+                    int color_v = Integer.parseInt(data_v.get("color").toString());
+                    if (color_v != this.color) {
+                        color_same = false;
+                    }
+                    int parent_v = Integer.parseInt(data_v.get("parent").toString());
+                    if (parent_v == this.ID) {
+                        if ((boolean) data_v.get("other_trees") == true) {
+                            other_tree_detected = true;
+                        }
                     }
                 }
-            }
+            } catch (Exception e) {}
         }        
         if (same_tree) {
             if ((!(color_same) ||  other_tree_detected)) {
@@ -242,46 +233,63 @@ public class AggerwalAlgoServer {
     }
     
     public String packageSharedData(int ID_v) {
-        Map<String, Object> myData = new HashMap<String, Object>();
-        myData.put("priority",this.priority.toString().replaceAll("\\s+",""));
-        myData.put("distance",this.distance);
-        myData.put("parent", this.parent);
-        myData.put("color", this.color);
-        myData.put("other_trees", this.other_trees);
-        JSONObject json = new JSONObject();
-        json.putAll(myData);
-        String stringData = json.toJSONString();
-        return stringData;
+        try {
+            Map<String, Object> myData = new HashMap<String, Object>();
+            myData.put("priority",this.priority.toString().replaceAll("\\s+",""));
+            myData.put("distance",this.distance);
+            myData.put("parent", this.parent);
+            myData.put("color", this.color);
+            myData.put("other_trees", this.other_trees);
+            JSONObject json = new JSONObject();
+            json.putAll(myData);
+            String stringData = json.toJSONString();
+            return stringData;
+        } catch (Exception e) {
+            return "";
+        }
     }
     
     // Sends request for data to v
     void requestData(int ID_v) {
-        String myData = this.packageSharedData(ID_v);
-        PrintWriter pout = null;
-        Socket s = null;
         try {
-            ServerTable.ServerInfo server_v = this.neighbors.servers.get(Integer.toString(ID_v));
-            s = new Socket(server_v.hostAddress, server_v.portNum);
-            pout = new PrintWriter(s.getOutputStream());
-            pout.println("requestData " + this.ID + " " + myData);
-            pout.flush();
-        } catch (IOException e) {
-            //if cannot connect assume crash - remove from neighborData
-            this.neighbor_data.remove(ID_v);
-            this.neighbors.servers.remove(Integer.toString(ID_v));
-            System.err.println("Send error: " + e);
-        } finally { 
+            String myData = this.packageSharedData(ID_v);
+            PrintWriter pout = null;
+            Socket s = null;
             try {
-                if (pout != null) {
-                    pout.close();
+                ServerTable.ServerInfo server_v = this.neighbors.servers.get(Integer.toString(ID_v));
+                s = new Socket(server_v.hostAddress, server_v.portNum);
+                pout = new PrintWriter(s.getOutputStream());
+                pout.println("requestData " + this.ID + " " + myData);
+                pout.flush();
+            } catch (IOException e) {
+                //if cannot connect assume crash - remove from neighborData
+                if (this.parent == ID_v) {
+                    HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                    data_v.put("distance", 10000);
+                    this.neighbor_data.put(ID_v, data_v);
+                    this.parent = -1;
+                    this.distance = 0;
+                    this.color = this.ID;
+                    this.other_trees = true;
+                    System.out.println("======> Node " + this.ID + " is root by fail");
                 }
-                if (s != null) {
-                    s.close();
+                //this.neighbors.servers.remove(Integer.toString(ID_v));
+                //this.neighbor_data.remove(ID_v);
+                //this.neighbors.servers.remove(Integer.toString(ID_v));
+                System.err.println("Send error: " + e);
+            } finally { 
+                try {
+                    if (pout != null) {
+                        pout.close();
+                    }
+                    if (s != null) {
+                        s.close();
+                    }
+                } catch(IOException ioe) { 
+                    ioe.printStackTrace(); 
                 }
-            } catch(IOException ioe) { 
-                ioe.printStackTrace(); 
             }
-        }
+        } catch (Exception e) {} 
         return;
     }
     
@@ -324,35 +332,34 @@ public class AggerwalAlgoServer {
               }
         }
         
-        //if (rounds < 10) {
-        //    this.copyNeighborData();
-        //} else {
-        //    System.exit(0);
-        //}
     }
     
     void resetColor(int newColor) {
-        this.color = newColor;
-        //this.mode = 0; // or Broadcast
-        this.other_trees = false;
-        if (this.color != newColor) {
-            Iterator it = this.neighbors.servers.entrySet().iterator();
-            while (it.hasNext()) {
-                HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
-                int ID_v = Integer.parseInt(pair.getKey());
-                if (ID_v != this.ID) {
-                    this.neighbor_colors.put(ID_v,-1);
-                    HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
-                    data_v.put("self_color",-1);
-                    this.neighbor_data.put(ID_v, data_v);
-                    // if v is child, clear color
-                    if (Integer.parseInt((data_v.get("parent").toString())) == ID) {
-                        data_v.put("color", -1);
-                        this.neighbor_data.put(ID_v, data_v);   
-                    }
+        try {
+            this.color = newColor;
+            //this.mode = 0; // or Broadcast
+            this.other_trees = false;
+            if (this.color != newColor) {
+                Iterator it = this.neighbors.servers.entrySet().iterator();
+                while (it.hasNext()) {
+                    try {
+                        HashMap.Entry<String, ServerTable.ServerInfo> pair = (HashMap.Entry)it.next();
+                        int ID_v = Integer.parseInt(pair.getKey());
+                        if (ID_v != this.ID) {
+                            this.neighbor_colors.put(ID_v,-1);
+                            HashMap data_v = (HashMap) this.neighbor_data.get(ID_v);
+                            data_v.put("self_color",-1);
+                            this.neighbor_data.put(ID_v, data_v);
+                            // if v is child, clear color
+                            if (Integer.parseInt((data_v.get("parent").toString())) == ID) {
+                                data_v.put("color", -1);
+                                this.neighbor_data.put(ID_v, data_v);   
+                            }
+                        }
+                    } catch (Exception e) {}
                 }
             }
-        }
+        } catch (Exception e) {}
     }
     
     public static void main (String[] args) {
@@ -378,13 +385,15 @@ public class AggerwalAlgoServer {
             Socket s;
             String command;
             System.out.println("Starting server...");
-            //copyNeighborData copyTask = new copyNeighborData(ns);
-            //ns.t.schedule(copyTask, 5000, 5000);
             RunnerThread r = new RunnerThread(ns);
             r.start();
             while((!ns.stop) && ((s = listener.accept()) != null)) {
-                TCPSocket s1 = new TCPSocket(s, ns);
-                s1.start();
+                try {
+                    TCPSocket s1 = new TCPSocket(s, ns);
+                    s1.start();
+                } catch (Exception e) {
+                    System.out.println("SUSPICIOUS");
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();

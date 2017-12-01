@@ -38,9 +38,10 @@ class RunnerThread extends Thread implements Runnable {
                     Thread.sleep(2500);
                 } catch (Exception e) {}
             }
-            ns.copy_neighbor_data();
-            //System.out.println("Server " + ns.ID + " round " + rounds + " done.");
-            rounds++;
+            try {
+                ns.copy_neighbor_data();
+                rounds++;
+            } catch (Exception e) {}
         }
         ns.stop = true;
         return;
